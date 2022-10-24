@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/sts"
@@ -43,15 +44,7 @@ func main() {
 		*listen = fmt.Sprintf(":%s", *listen)
 	}
 
-	var sess *session.Session
-
-	if *region != "" && *region != "default" {
-		sess = session.Must(session.NewSession(&aws.Config{
-			Region: region,
-		}))
-	} else {
-		sess = session.Must(session.NewSession())
-	}
+	sess := awsSession(nil)
 
 	id, err := sts.New(sess).GetCallerIdentity(&sts.GetCallerIdentityInput{})
 	if err != nil {
@@ -63,4 +56,17 @@ func main() {
 
 	logger.Info("Listening for requests", zap.String("address", *listen), zap.String("bucket", *bucket), zap.String("identity", *id.Arn))
 	http.ListenAndServe(*listen, &server)
+}
+
+func awsSession(creds *credentials.Credentials) *session.Session {
+	conf := &aws.Config{}
+
+	if creds != nil {
+		conf.Credentials = creds
+	}
+	if *region != "" && *region != "default" {
+		conf.Region = region
+	}
+
+	return session.Must(session.NewSession(conf))
 }
