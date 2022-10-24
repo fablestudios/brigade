@@ -8,8 +8,8 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/Medium/brigade/backend"
 	"github.com/aws/aws-sdk-go/aws/awserr"
+	"github.com/fablestudios/brigade/backend"
 	"github.com/golang/gddo/httputil/header"
 	"go.uber.org/zap"
 )

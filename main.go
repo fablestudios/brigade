@@ -6,13 +6,15 @@ import (
 	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/aws/aws-sdk-go/service/sts"
 	"go.uber.org/zap"
 	"gopkg.in/alecthomas/kingpin.v2"
 
-	"github.com/Medium/brigade/backend"
-	"github.com/Medium/brigade/frontend"
+	"github.com/fablestudios/brigade/backend"
+	"github.com/fablestudios/brigade/frontend"
 )
 
 var (
@@ -42,19 +44,29 @@ func main() {
 		*listen = fmt.Sprintf(":%s", *listen)
 	}
 
-	var sess *session.Session
+	sess := awsSession(nil)
 
-	if *region != "" && *region != "default" {
-		sess = session.Must(session.NewSession(&aws.Config{
-			Region: region,
-		}))
-	} else {
-		sess = session.Must(session.NewSession())
+	id, err := sts.New(sess).GetCallerIdentity(&sts.GetCallerIdentityInput{})
+	if err != nil {
+		logger.Fatal("Failed to get AWS identity from STS", zap.Error(err))
 	}
 
 	storage := backend.NewStorage(s3.New(sess), *bucket)
 	server := frontend.Server{Backend: storage, Logger: logger}
 
-	logger.Info("Listening for requests", zap.String("address", *listen))
+	logger.Info("Listening for requests", zap.String("address", *listen), zap.String("bucket", *bucket), zap.String("identity", *id.Arn))
 	http.ListenAndServe(*listen, &server)
+}
+
+func awsSession(creds *credentials.Credentials) *session.Session {
+	conf := &aws.Config{}
+
+	if creds != nil {
+		conf.Credentials = creds
+	}
+	if *region != "" && *region != "default" {
+		conf.Region = region
+	}
+
+	return session.Must(session.NewSession(conf))
 }

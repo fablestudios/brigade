@@ -1,19 +1,19 @@
-FROM golang:1.10-alpine3.8 AS builder
-
-# Download and install the latest release of dep
-ADD https://github.com/golang/dep/releases/download/v0.4.1/dep-linux-amd64 /usr/bin/dep
-RUN chmod +x /usr/bin/dep
+FROM --platform=${BUILDPLATFORM} golang:1.19.2-alpine3.16 AS builder
+ARG TARGETARCH
+ARG TARGETOS
 
 RUN apk --no-cache add ca-certificates git
 
 # Copy the code from the host and compile it
-WORKDIR $GOPATH/src/github.com/Medium/brigade
-COPY Gopkg.toml Gopkg.lock ./
-RUN dep ensure --vendor-only
+WORKDIR /src/brigade
+COPY go.mod go.sum ./
+RUN go mod download
 COPY . ./
-RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix nocgo -o /brigade .
+RUN CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build -a -installsuffix nocgo -o /brigade .
 
-FROM alpine:3.8
-RUN apk --no-cache add ca-certificates
-COPY --from=builder /brigade ./
-ENTRYPOINT ["./brigade"]
+FROM --platform=${TARGETPLATFORM} alpine:3.16
+RUN apk --no-cache add aws-cli ca-certificates
+COPY --from=builder /brigade /usr/local/bin/
+
+USER nobody
+ENTRYPOINT ["/usr/local/bin/brigade"]
