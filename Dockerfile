@@ -12,7 +12,7 @@ COPY . ./
 RUN CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build -a -installsuffix nocgo -o /brigade .
 
 FROM --platform=${TARGETPLATFORM} alpine:3.16
-RUN apk --no-cache add ca-certificates
+RUN apk --no-cache add aws-cli ca-certificates
 COPY --from=builder /brigade /usr/local/bin/
 
 USER nobody
