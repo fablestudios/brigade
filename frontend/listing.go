@@ -6,7 +6,7 @@ import (
 	"path"
 	"time"
 
-	"github.com/Medium/brigade/backend"
+	"github.com/fablestudios/brigade/backend"
 )
 
 type Listing struct {
@@ -196,7 +196,7 @@ var listingHTML = `
 			</div>
 		</main>
 		<footer>
-			Powered by <a href="https://github.com/Medium/brigade">Brigade</a>.
+			Powered by <a href="https://github.com/fablestudios/brigade">Brigade</a>.
 		</footer>
 	</body>
 </html>

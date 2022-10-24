@@ -11,8 +11,8 @@ import (
 	"go.uber.org/zap"
 	"gopkg.in/alecthomas/kingpin.v2"
 
-	"github.com/Medium/brigade/backend"
-	"github.com/Medium/brigade/frontend"
+	"github.com/fablestudios/brigade/backend"
+	"github.com/fablestudios/brigade/frontend"
 )
 
 var (
